@@ -951,7 +951,32 @@ function drawHeli(h) {
     ctx.restore();
 }
 draw();
+// ==========================================
+// ADAUT NOU: CONTROALE PASTURĂ / PC
+// ==========================================
+window.addEventListener('keydown', e => {
+    if (paused || !gameStarted) return;
+    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+        movingLeft = true;
+        facingRight = false;
+    }
+    if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+        movingRight = true;
+        facingRight = true;
+    }
+    if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+        shoot();
+    }
+});
 
+window.addEventListener('keyup', e => {
+    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+        movingLeft = false;
+    }
+    if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+        movingRight = false;
+    }
+});
 </script>
 </body>
 </html>
