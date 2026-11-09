@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Zombie Avenue: Desert Outpost</title>
+    <!-- Legătura către fișierul CSS extern -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<audio id="bgMusic" loop><source src="desert_music.mp3" type="audio/mpeg"></audio>
+<audio id="windAudio" loop><source src="wind.mp3" type="audio/mpeg"></audio>
+<audio id="rocketLaunchSfx"><source src="rocket_launch.mp3" type="audio/mpeg"></audio>
+<audio id="nukeExplosionSfx"><source src="nuke.mp3" type="audio/mpeg"></audio>
+
+<div id="start-screen">
+    <h1>MISSION 2:<br>DESERT OUTPOST</h1>
+    <button id="playBtn" onclick="startGame()">DEPLOY</button>
+    <div id="info-container">
+        <div class="tabs">
+            <button class="tab-btn active" onclick="openTab(event, 'about')">The Outpost?</button>
+            <button class="tab-btn" onclick="openTab(event, 'goal')">Objective?</button>
+            <button class="tab-btn" onclick="openTab(event, 'tips')">Intel?</button>
+        </div>
+        <div id="about" class="tab-content active">The zombies have taken over the reinforced military bunkers in the Red Sand Outpost.</div>
+        <div id="goal" class="tab-content">Neutralize all bunkers to clear the sector!</div>
+        <div id="tips" class="tab-content">Sandstorms reduce visibility. Stay focused on the thermal signatures. Use Arrow Keys to move, Space/Up to shoot, and E or Shop button for the shop.</div>
+    </div>
+</div>
+
+<div id="win-screen">
+    <h2>SECTOR CLEAR!</h2>
+    <p>The Desert Outpost has been reclaimed. You are a hero of the military!</p>
+    <button onclick="location.reload()" style="margin-top:30px; padding:10px 20px; background:#0f0; border:none; font-weight:bold; cursor:pointer;">RESTART MISSION</button>
+</div>
+
+<div id="ui-layer">
+    <div id="scoreboard">
+        TIME: <span id="timeVal">0s</span><br>
+        SCORE: <span id="scoreVal">0</span><br>
+        WEAPON: <span id="weaponName">Main Gun</span>
+    </div>
+    <div id="money-ui">$0</div>
+    <div id="shopBtn">SHOP (E)</div>
+    <div id="dialogue-box"></div>
+</div>
+
+<div id="shop-menu">
+    <h2>ARMORY</h2>
+    <div class="shop-item"><span>Main Gun (Default)</span><button class="buy-btn" onclick="equip(0)">EQUIP</button></div>
+    <div class="shop-item"><span>Rockets ($800)</span><button id="buyRocket" class="buy-btn" onclick="buyWeapon(1)">BUY</button></div>
+    <div class="shop-item"><span>Cannonballs ($2000)</span><button id="buyCannon" class="buy-btn" onclick="buyWeapon(2)">BUY</button></div>
+    <div class="shop-item"><span>Cluster Bomb ($3500)</span><button id="buyCluster" class="buy-btn" onclick="buyWeapon(4)">BUY</button></div>
+    <div class="shop-item"><span>Tactical Nuke ($15,000)</span><button id="buyNuke" class="buy-btn" onclick="buyWeapon(3)">BUY</button></div>
+    <div class="shop-item"><span>Hunter ($200) - AR</span><button id="buyHunter" class="buy-btn" onclick="buyHuman('hunter')">BUY</button></div>
+    <div class="shop-item"><span>Adrian ($1000) - RPG</span><button id="buyAdrian" class="buy-btn" onclick="buyHuman('adrian')">BUY</button></div>
+    <div class="shop-item"><span>Attack Heli ($3000) - Gun</span><button id="buyHeli1" class="buy-btn" onclick="buyHeli(1)">BUY</button></div>
+    <div class="shop-item"><span>Rocket Heli ($4000) - Blue</span><button id="buyHeli2" class="buy-btn" onclick="buyHeli(2)">BUY</button></div>
+    <br>
+    <button onclick="toggleShop()" style="background:red; color:white; padding:10px; border:none; font-weight:bold; cursor:pointer;">CLOSE</button>
+</div>
+
+<canvas id="gameCanvas"></canvas>
+
+<div class="controls" id="game-controls">
+    <div id="leftBtn" class="btn">LEFT</div>
+    <div id="rightBtn" class="btn">RIGHT</div>
+    <div id="fireBtn" class="btn">FIRE</div>
+</div>
+
+<!-- Secvențele JavaScript încărcate ordonat -->
+<script src="js/config.js"></script>
+<script src="js/input.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
