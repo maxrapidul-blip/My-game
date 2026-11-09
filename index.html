@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Zombie Downpour - Flash Flood Overkill</title>
+    <style>
+        body { margin: 0; background: #000; overflow: hidden; font-family: 'Courier New', monospace; touch-action: none; user-select: none; }
+        canvas { display: block; background: #0b1118; position: absolute; top: 0; left: 0; z-index: 1; }
+        
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: none; z-index: 10; }
+        #scoreboard { position: absolute; top: 10px; left: 10px; color: #0f0; background: rgba(0,0,0,0.8); padding: 12px; border: 2px solid #0f0; font-size: 14px; }
+        #money-ui { position: absolute; top: 15px; right: 20px; color: #ffd700; font-size: 28px; font-weight: bold; text-shadow: 2px 2px #000; }
+        #shopBtn { position: absolute; top: 120px; left: 10px; background: #ffd700; color: #000; padding: 10px; font-weight: bold; border-radius: 5px; pointer-events: auto; cursor: pointer; }
+
+        #pauseBtn { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.6); color: #fff; border: 2px solid #fff; font-size: 18px; padding: 8px 16px; font-weight: bold; cursor: pointer; border-radius: 4px; pointer-events: auto; }
+        #pause-menu { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: 400; flex-direction: column; align-items: center; justify-content: center; }
+        #pause-menu h2 { color: #fff; font-size: 40px; margin-bottom: 30px; letter-spacing: 2px; text-shadow: 0 0 10px #fff; }
+        .menu-btn { background: #333; color: #fff; border: 2px solid #555; padding: 15px 40px; font-size: 18px; font-weight: bold; margin: 10px; cursor: pointer; font-family: inherit; width: 220px; text-align: center; border-radius: 6px; }
+        .menu-btn:hover { background: #ffd700; color: #000; border-color: #ffd700; }
+
+        #start-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5, 9, 16, 0.7); backdrop-filter: blur(3px); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 200; overflow-y: auto; }
+        #start-screen h1 { color: #f00; font-size: 48px; text-shadow: 4px 4px #440000; margin-bottom: 20px; text-align: center; }
+        #playBtn { background: #ffd700; color: #000; padding: 20px 60px; font-size: 24px; font-weight: bold; border: none; cursor: pointer; border-radius: 10px; box-shadow: 0 0 20px #ffd700; animation: pulse 1.5s infinite; margin-bottom: 30px; pointer-events: auto; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+        #info-container { width: 85%; max-width: 650px; background: rgba(0,0,0,0.65); border: 1px solid #444; padding: 15px; border-radius: 8px; pointer-events: auto; }
+        .tabs { display: flex; justify-content: space-around; margin-bottom: 15px; }
+        .tab-btn { background: #333; color: #fff; border: 1px solid #555; padding: 8px 15px; cursor: pointer; font-family: inherit; }
+        .tab-btn.active { background: #ffd700; color: #000; border-color: #ffd700; }
+        .tab-content { display: none; color: #ccc; line-height: 1.4; font-size: 14px; min-height: 80px; }
+        .tab-content.active { display: block; }
+
+        .setting-row { display: flex; justify-content: space-between; align-items: center; margin: 15px 0; padding: 5px; }
+        .quality-btn { background: #555; color: #fff; border: 2px solid #777; padding: 6px 10px; cursor: pointer; font-weight: bold; font-family: inherit; margin-left: 5px; font-size: 11px; }
+        .quality-btn.selected { background: #00ff00; color: #000; border-color: #00ff00; box-shadow: 0 0 10px #00ff00; }
+        .quality-btn.ultra-select { background: #ff00ff; color: #fff; border-color: #ff00ff; box-shadow: 0 0 10px #ff00ff; }
+        .quality-btn.overdrive-select { background: #ff3300; color: #fff; border-color: #ff3300; box-shadow: 0 0 15px #ff3300; animation: flashRed 1s infinite alternate; }
+        @keyframes flashRed { from { box-shadow: 0 0 4px #f30; } to { box-shadow: 0 0 18px #f30; } }
+
+        #win-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 300; text-align: center; padding: 20px; }
+        #win-screen h2 { color: #0f0; font-size: 60px; margin-bottom: 20px; }
+        #win-screen p { color: #fff; font-size: 20px; max-width: 600px; line-height: 1.6; }
+
+        #dialogue-box { position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.9); border: 2px solid #00f; color: #fff; padding: 15px; width: 80%; display: none; z-index: 150; font-size: 16px; border-radius: 4px; box-shadow: 0 0 15px #00f; }
+
+        #shop-menu { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #222; border: 4px solid #ffd700; padding: 20px; color: white; width: 85%; text-align: center; z-index: 100; box-shadow: 0 0 50px #000; overflow-y: auto; max-height: 90vh; pointer-events: auto; }
+        .shop-item { border: 1px solid #555; padding: 10px; margin: 10px 0; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+        .buy-btn { background: #ffd700; color: #000; border: none; padding: 10px; font-weight: bold; cursor: pointer; min-width: 80px; }
+        .buy-btn:disabled { background: #555; color: #888; }
+
+        .controls { position: absolute; bottom: 20px; width: 100%; display: none; justify-content: space-around; z-index: 10; pointer-events: auto; }
+        .btn { width: 75px; height: 75px; background: rgba(255,255,255,0.1); border: 2px solid #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; }
+        #fireBtn { background: rgba(255,0,0,0.4); border-color: #f00; width: 100px; height: 100px; }
+    </style>
+</head>
+<body>
+
+<audio id="bgMusic" loop><source src="music.mp3" type="audio/mpeg"></audio>
+<audio id="rainAudio" loop><source src="rain.mp3" type="audio/mpeg"></audio>
+
+<div id="start-screen">
+    <h1>ZOMBIE DOWNPOUR</h1>
+    <button id="playBtn" onclick="startGame()">PLAY</button>
+    <div id="info-container">
+        <div class="tabs">
+            <button class="tab-btn active" onclick="openTab(event, 'about')">About the city?</button>
+            <button class="tab-btn" onclick="openTab(event, 'goal')">Goal?</button>
+            <button class="tab-btn" onclick="openTab(event, 'tips')">Tips?</button>
+            <button class="tab-btn" onclick="openTab(event, 'settings')">Settings ⚙️</button>
+        </div>
+        <div id="about" class="tab-content active">The city Avenue Valley was infested by zombies inside of random residents buildings! We as the military will work on destroying these buildings and save Avenue Valley! (Zombie Downpour edition).</div>
+        <div id="goal" class="tab-content">Destroy all buildings! Once they are all destroyed you officially finished the game!</div>
+        <div id="tips" class="tab-content">Sunetul pentru Ring Lazer este activat, iar restul armelor sunt curate pentru 60 FPS!</div>
+        <div id="settings" class="tab-content">
+            <div class="setting-row">
+                <span>GRAPHICS ENGINE:</span>
+                <div>
+                    <button id="lowQualBtn" class="quality-btn" onclick="setQuality('low')">LOW</button>
+                    <button id="highQualBtn" class="quality-btn" onclick="setQuality('high')">HIGH</button>
+                    <button id="ultraQualBtn" class="quality-btn" onclick="setQuality('ultra')">ULTRA</button>
+                    <button id="overdriveQualBtn" class="quality-btn overdrive-select" onclick="setQuality('overdrive')">💥OVERDRIVE</button>
+                </div>
+            </div>
+            <p id="settings-desc" style="font-size:11px; color:#aaa; margin:0;">Overdrive injects procedural building interiors, lens glass splatters, volumetric fog banks, heat distortion waves, and audio SFX bindings.</p>
+        </div>
+    </div>
+</div>
+
+<div id="pause-menu">
+    <h2>GAME PAUSED</h2>
+    <button class="menu-btn" onclick="togglePause()">RESUME</button>
+    <button class="menu-btn" onclick="restartMatch()">RESTART</button>
+    <button class="menu-btn" onclick="exitToMainMenu()">MAIN MENU</button>
+</div>
+
+<div id="win-screen">
+    <h2>YOU WIN!</h2>
+    <p>Avenue Valley is officially safe from monsters! Thanks for your help! The military is very happy of your help!</p>
+    <button onclick="location.reload()" style="margin-top:30px; padding:10px 20px; background:#0f0; border:none; font-weight:bold; cursor:pointer;">RESTART</button>
+</div>
+
+<div id="ui-layer">
+    <div id="scoreboard">
+        TIME: <span id="timeVal">0s</span><br>
+        SCORE: <span id="scoreVal">0</span><br>
+        WEAPON: <span id="weaponName">Main Gun</span>
+    </div>
+    <div id="pauseBtn" onclick="togglePause()">PAUSE ⏸️</div>
+    <div id="money-ui">$0</div>
+    <div id="shopBtn">SHOP</div>
+    <div id="dialogue-box"></div>
+</div>
+
+<div id="shop-menu">
+    <h2>ARMORY</h2>
+    <div class="shop-item"><span>Main Gun (Default)</span><button class="buy-btn" onclick="equip(0)">EQUIP</button></div>
+    <div class="shop-item"><span>Rockets ($800)</span><button id="buyRocket" class="buy-btn" onclick="buyWeapon(1)">BUY</button></div>
+    <div class="shop-item"><span>Super Cannonballs ($2000)</span><button id="buyCannon" class="buy-btn" onclick="buyWeapon(2)">BUY</button></div>
+    <div class="shop-item"><span>Ring Lazer ($5000)</span><button id="buyRingLazer" class="buy-btn" onclick="buyWeapon(3)">BUY</button></div>
+    <div class="shop-item"><span>Nuclear Bomb ($15000)</span><button id="buyNuke" class="buy-btn" onclick="triggerNuke()">BUY</button></div>
+    <div class="shop-item"><span>Attack Heli ($3000) - Gun</span><button id="buyHeli1" class="buy-btn" onclick="buyHeli(1)">BUY</button></div>
+    <div class="shop-item"><span>Rocket Heli ($4000) - Blue</span><button id="buyHeli2" class="buy-btn" onclick="buyHeli(2)">BUY</button></div>
+    <br>
+    <button onclick="toggleShop()" style="background:red; color:white; padding:10px; border:none; font-weight:bold; cursor:pointer;">CLOSE</button>
+</div>
+
+<canvas id="gameCanvas"></canvas>
+
+<div class="controls" id="game-controls">
+    <div id="leftBtn" class="btn">LEFT</div>
+    <div id="rightBtn" class="btn">RIGHT</div>
+    <div id="fireBtn" class="btn">FIRE</div>
+</div>
+
+<script>
+function createAudioPool(src, poolSize, volume = 1.0) {
+    let pool = [];
+    let index = 0;
+    for (let i = 0; i < poolSize; i++) {
+        let audio = new Audio(src);
+        audio.volume = volume;
+        pool.push(audio);
+    }
+    return {
+        play: function() {
+            let audio = pool[index];
+            audio.currentTime = 0;
+            audio.play().catch(e => {});
+            index = (index + 1) % poolSize;
+        }
+    };
+}
+
+const sfxThunder = createAudioPool('thunder.mp3', 3, 0.8);
+const sfxNuke = createAudioPool('nuke.mp3', 2, 1.0);
+const sfxLaser = createAudioPool('lazer_ring.mp3', 4, 0.8); // <-- Linia adăugată pentru Ring Lazer
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight * 0.75;
+
+const WORLD_WIDTH = 5000;
+const GROUND_Y = canvas.height - 40;
+
+let cash = 0, score = 0, startTime = Date.now(), totalPausedTime = 0, pauseStart = 0;
+let movingLeft = false, movingRight = false, facingRight = true, paused = true;
+let gameStarted = false, isPauseMenuOpen = false;
+let projectiles = [], zombies = [], buildings = [], bloodSplats = [], explosions = [], humans = [];
+let buildingParticles = [];
+
+let physicalDebris = [];
+let activeLights = [];
+let heatDistortions = [];
+let screenLensDrops = [];
+let volumetricFogBanks = [];
+let timeCycle = 0; 
+let targetCameraZoom = 1.0;
+let currentCameraZoom = 1.0;
+let chromaticAberrationTimer = 0;
+let graphicsMode = 'overdrive'; 
+let screenShake = 0; 
+
+let nukePlane = null;
+let fallingNuke = null;
+let nukeFlashAlpha = 0;
+
+let lightningBolts = [];
+let lightningTimer = 0;
+let nextLightningInterval = 180;
+let lightningFlashAlpha = 0;
+
+let rainImpactSplashes = [];
+let floodWaterLevel = 0; 
+
+for(let i=0; i<30; i++) {
+    screenLensDrops.push({
+        x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+        vy: 0.2 + Math.random()*0.5, len: 4 + Math.random()*6, life: 0.3 + Math.random()*0.7
+    });
+}
+
+for(let i=0; i<12; i++) {
+    volumetricFogBanks.push({
+        x: i * 450, y: GROUND_Y - 90, r: 140 + Math.random()*80,
+        vx: 0.2 + Math.random()*0.3, driftY: Math.random()*Math.PI
+    });
+}
+
+let backgroundMountains = [];
+for(let i=0; i<35; i++) {
+    backgroundMountains.push({
+        x: i * 250, w: 300 + Math.random() * 200, h: 120 + Math.random() * 180,
+        color: `rgb(${12 + Math.random()*8}, ${18 + Math.random()*8}, ${28 + Math.random()*10})`
+    });
+}
+
+let torrentialRain = [];
+for(let i=0; i < 350; i++) {
+    torrentialRain.push({
+        x: Math.random() * WORLD_WIDTH, 
+        y: Math.random() * canvas.height - canvas.height,
+        speed: 18 + Math.random() * 10,
+        length: 22 + Math.random() * 12,
+        angle: (76 + Math.random() * 5) * (Math.PI / 180),
+        thickness: 1 + Math.random() * 1
+    });
+}
+
+const weapons = [
+    { name: "Main Gun", dmg: 5, price: 0, owned: true, type: "bullet" },
+    { name: "Rockets", dmg: 10, price: 800, owned: false, type: "rocket" },
+    { name: "Cannonballs", dmg: 25, price: 2000, owned: false, type: "cannon" },
+    { name: "Ring Lazer", dmg: 40, price: 5000, owned: false, type: "ringlaser" }
+];
+let currentWeapon = 0;
+
+const tank = { x: 400, y: GROUND_Y - 55, w: 90, h: 45, speed: 6, recoil: 0, muzzleFlash: 0 };
+let helis = {
+    green: { active: false, x: -100, y: 100, speed: 7.5, bladeAngle: 0, fireTimer: 0, color: '#3a5a2a', tailColor: '#2d4d22', fireRate: 8, weaponType: 'bullet', facingRight: true },
+    blue: { active: false, x: -200, y: 60, speed: 8.0, bladeAngle: 0, fireTimer: 0, color: '#2a3a5a', tailColor: '#222d4d', fireRate: 24, weaponType: 'rocket', facingRight: true }
+};
+
+function initBuildings() {
+    buildings = [];
+    for (let i = 0; i < 15; i++) {
+        const h = 250 + Math.random() * 300;
+        const hp = 750 + Math.floor(Math.random() * 5250);
+        
+        let interiorRooms = [];
+        let rows = Math.floor(h / 50);
+        for(let r=0; r<rows; r++) {
+            for(let c=0; c<3; c++) {
+                interiorRooms.push({
+                    row: r, col: c, rx: 25 + (c*50), ry: 25 + (r*45), rw: 30, rh: 25,
+                    blownOpen: false, furnitureType: Math.random() > 0.4 ? 'furniture' : 'beam',
+                    itemColor: `hsl(${Math.random()*360}, 40%, 25%)`
+                });
+            }
+        }
+
+        buildings.push({ 
+            x: 800 + (i * 300), y: GROUND_Y - h, w: 180, h: h, 
+            hp: hp, maxHp: hp, destroyed: false, shake: 0,
+            color: `rgb(${30+Math.random()*15},${30+Math.random()*15},${40})`,
+            impactCraters: [], rooms: interiorRooms
+        });
+    }
+}
+initBuildings();
+
+function openTab(evt, tabName) {
+    let contents = document.getElementsByClassName("tab-content");
+    for (let i = 0; i < contents.length; i++) contents[i].classList.remove("active");
+    let buttons = document.getElementsByClassName("tab-btn");
+    for (let i = 0; i < buttons.length; i++) buttons[i].classList.remove("active");
+    document.getElementById(tabName).classList.add("active");
+    evt.currentTarget.classList.add("active");
+}
+
+function setQuality(mode) {
+    graphicsMode = mode;
+    document.getElementById('lowQualBtn').className = 'quality-btn' + (mode === 'low' ? ' selected' : '');
+    document.getElementById('highQualBtn').className = 'quality-btn' + (mode === 'high' ? ' selected' : '');
+    document.getElementById('ultraQualBtn').className = 'quality-btn' + (mode === 'ultra' ? ' ultra-select' : '');
+    document.getElementById('overdriveQualBtn').className = 'quality-btn overdrive-select' + (mode === 'overdrive' ? ' overdrive-select' : '');
+    
+    const d = document.getElementById('settings-desc');
+    if(mode === 'low') d.innerText = "Basic retro performance fills. Zero rendering overhead.";
+    if(mode === 'high') d.innerText = "Real-time glows, baseline shake vectors, and parallax layers.";
+    if(mode === 'ultra') d.innerText = "Ray illumination gradients, particle debris physics, and chromatic lens split.";
+    if(mode === 'overdrive') d.innerText = "Overdrive injects procedural building interiors, lens glass splatters, volumetric fog banks, heat distortion waves, and audio SFX bindings.";
+}
+
+function startGame() {
+    const music = document.getElementById('bgMusic');
+    music.volume = 0.5; music.play().catch(e => {});
+
+    const rain = document.getElementById('rainAudio');
+    rain.volume = 0.6; rain.play().catch(e => {});
+
+    document.getElementById('start-screen').style.display = 'none';
+    document.getElementById('ui-layer').style.display = 'block';
+    document.getElementById('game-controls').style.display = 'flex';
+    gameStarted = true; paused = false; startTime = Date.now(); totalPausedTime = 0;
+    showDialogue("COMMANDER: ZOMBIE DOWNPOUR ENGAGED.");
+}
+
+function checkVictory() {
+    if (buildings.every(b => b.destroyed)) {
+        paused = true;
+        document.getElementById('win-screen').style.display = 'flex';
+        document.getElementById('bgMusic').pause();
+        document.getElementById('rainAudio').pause();
+    }
+}
+
+function showDialogue(text) {
+    const box = document.getElementById('dialogue-box');
+    box.innerText = text; box.style.display = 'block';
+    setTimeout(() => { box.style.display = 'none'; }, 4000);
+}
+
+function toggleShop() {
+    if(!gameStarted || isPauseMenuOpen) return;
+    paused = !paused;
+    document.getElementById('shop-menu').style.display = paused ? 'block' : 'none';
+}
+document.getElementById('shopBtn').onclick = toggleShop;
+
+function triggerNuke() {
+    if (cash >= 15000 && !nukePlane && !fallingNuke) {
+        cash -= 15000;
+        toggleShop(); 
+        
+        let camX = Math.max(0, Math.min(tank.x - canvas.width/2, WORLD_WIDTH - canvas.width));
+        nukePlane = {
+            x: camX - 150,
+            y: 80,
+            speed: 10,
+            targetX: camX + canvas.width / 2
+        };
+        showDialogue("COMMANDER: NUCLEAR STRIKE AUTHORIZED.");
+    } else if (cash < 15000) {
+        showDialogue("COMMANDER: Need $15000 for Nuclear Strike!");
+    }
+}
+
+function togglePause() {
+    if (!gameStarted || document.getElementById('shop-menu').style.display === 'block') return;
+    isPauseMenuOpen = !isPauseMenuOpen; paused = isPauseMenuOpen;
+    const pauseMenu = document.getElementById('pause-menu');
+    const music = document.getElementById('bgMusic');
+    const rain = document.getElementById('rainAudio');
+    
+    if (isPauseMenuOpen) {
+        pauseStart = Date.now(); pauseMenu.style.display = 'flex';
+        music.pause();
+        rain.pause();
+    } else {
+        totalPausedTime += Date.now() - pauseStart; pauseMenu.style.display = 'none';
+        music.play().catch(e => {});
+        rain.play().catch(e => {});
+    }
+}
+
+function restartMatch() {
+    cash = 0; score = 0; startTime = Date.now(); totalPausedTime = 0;
+    movingLeft = false; movingRight = false; facingRight = true;
+    projectiles = []; zombies = []; bloodSplats = []; explosions = []; humans = []; buildingParticles = [];
+    physicalDebris = []; activeLights = []; heatDistortions = []; timeCycle = 0; targetCameraZoom = 1.0; currentCameraZoom = 1.0; chromaticAberrationTimer = 0;
+    rainImpactSplashes = []; floodWaterLevel = 0; screenShake = 0; lightningBolts = []; lightningTimer = 0; lightningFlashAlpha = 0;
+    nukePlane = null; fallingNuke = null; nukeFlashAlpha = 0;
+    tank.x = 400; tank.recoil = 0; tank.muzzleFlash = 0;
+    helis.green.active = false; helis.blue.active = false;
+    weapons[1].owned = false; weapons[2].owned = false; weapons[3].owned = false; currentWeapon = 0;
+    document.getElementById('weaponName').innerText = weapons[0].name;
+
+    initBuildings();
+    isPauseMenuOpen = false; paused = false;
+    document.getElementById('pause-menu').style.display = 'none';
+    document.getElementById('win-screen').style.display = 'none';
+    
+    const music = document.getElementById('bgMusic');
+    music.currentTime = 0; music.play().catch(e => {});
+    const rain = document.getElementById('rainAudio');
+    rain.currentTime = 0; rain.play().catch(e => {});
+}
+
+function exitToMainMenu() {
+    isPauseMenuOpen = false; gameStarted = false; paused = true;
+    document.getElementById('pause-menu').style.display = 'none';
+    document.getElementById('ui-layer').style.display = 'none';
+    document.getElementById('game-controls').style.display = 'none';
+    document.getElementById('shop-menu').style.display = 'none';
+    document.getElementById('win-screen').style.display = 'none';
+    document.getElementById('start-screen').style.display = 'flex';
+    document.getElementById('bgMusic').pause();
+    document.getElementById('rainAudio').pause();
+}
+
+function buyWeapon(idx) {
+    if (cash >= weapons[idx].price) { cash -= weapons[idx].price; weapons[idx].owned = true; equip(idx); }
+}
+
+function buyHeli(type) {
+    if (type === 1 && cash >= 3000 && !helis.green.active) {
+        cash -= 3000; helis.green.active = true; helis.green.x = tank.x;
+    } else if (type === 2 && cash >= 4000 && !helis.blue.active) {
+        cash -= 4000; helis.blue.active = true; helis.blue.x = tank.x;
+    }
+    toggleShop();
+}
+
+function equip(idx) {
+    if (weapons[idx].owned) { currentWeapon = idx; document.getElementById('weaponName').innerText = weapons[idx].name; if (paused && document.getElementById('shop-menu').style.display === 'block') toggleShop(); }
+}
+
+const setup = (id, start, end) => {
+    const el = document.getElementById(id);
+    if(el) {
+        el.addEventListener('touchstart', e => { e.preventDefault(); start(); });
+        el.addEventListener('touchend', e => { e.preventDefault(); end(); });
+    }
+};
+setup('leftBtn', () => { if(!paused) { movingLeft = true; facingRight = false; } }, () => movingLeft = false);
+setup('rightBtn', () => { if(!paused) { movingRight = true; facingRight = true; } }, () => movingRight = false);
+setup('fireBtn', () => { if(!paused) shoot(); }, () => {});
+
+function shoot() {
+    tank.recoil = 12; tank.muzzleFlash = 4;
+    const dir = facingRight ? 1 : -1;
+    const px = facingRight ? tank.x + tank.w : tank.x;
+    const py = tank.y + 15;
+    
+    let weaponType = weapons[currentWeapon].type;
+    projectiles.push({ x: px, y: py, vx: 20 * dir, vy: 0, type: weaponType, dmg: weapons[currentWeapon].dmg });
+
+    // Se activează sunetul doar pentru Ring Lazer, menținând restul armelor silențioase pentru a preveni lag-ul
+    if (weaponType === 'ringlaser') {
+        sfxLaser.play();
+    }
+
+    if(graphicsMode === 'high' || graphicsMode === 'ultra' || graphicsMode === 'overdrive') {
+        activeLights.push({ x: px, y: py, r: 120, color: 'rgba(255,200,50,0.8)', decay: 0.2 });
+        if(weaponType === 'cannon') targetCameraZoom = 0.85; 
+    }
+}
+
+function spawnUltraDebris(x, y, count, isFire) {
+    for(let i=0; i<count; i++) {
+        physicalDebris.push({
+            x: x, y: y, vx: (Math.random() - 0.5) * 8, vy: -Math.random() * 7 - 2,
+            r: Math.random() * 5 + 2, rot: Math.random() * Math.PI, rotV: (Math.random() - 0.5) * 0.2,
+            life: 1.0, type: isFire ? 'ember' : 'masonry', bounce: 0.2 + Math.random()*0.2
+        });
+    }
+}
+
+function triggerSharpSplash(x, y) {
+    let sparksCount = 3 + Math.floor(Math.random() * 2);
+    for(let i = 0; i < sparksCount; i++) {
+        rainImpactSplashes.push({
+            x: x, y: y, vx: (Math.random() - 0.5) * 5, vy: -Math.random() * 4 - 2,
+            length: 3 + Math.random() * 4, life: 8 + Math.floor(Math.random() * 6)
+        });
+    }
+}
+
+function update() {
+    const rainCheck = document.getElementById('rainAudio');
+    if (gameStarted && !paused && rainCheck.paused) {
+        rainCheck.play().catch(e => {});
+    }
+
+    if (!gameStarted) {
+        timeCycle += 0.001;
+        if(graphicsMode === 'ultra' || graphicsMode === 'overdrive') {
+            lightningTimer++;
+            if (lightningTimer > nextLightningInterval) {
+                lightningTimer = 0;
+                nextLightningInterval = 180 + Math.random() * 300;
+                lightningFlashAlpha = 0.6;
+                sfxThunder.play();
+            }
+        }
+        if (lightningFlashAlpha > 0) lightningFlashAlpha -= 0.05;
+        
+        torrentialRain.forEach(p => {
+            p.y += p.speed;
+            p.x += Math.cos(p.angle) * 4;
+            if (p.y >= GROUND_Y) {
+                p.y = Math.random() * -200;
+                p.x = Math.random() * WORLD_WIDTH;
+            }
+        });
+        return;
+    }
+
+    if (paused) return;
+    
+    let matchTime = Math.floor((Date.now() - startTime - totalPausedTime) / 1000);
+    document.getElementById('timeVal').innerText = matchTime + "s";
+    document.getElementById('scoreVal').innerText = score;
+    document.getElementById('money-ui').innerText = "$" + cash;
+    
+    if (screenShake > 0) screenShake *= 0.85;
+    if (chromaticAberrationTimer > 0) chromaticAberrationTimer--;
+    if (lightningFlashAlpha > 0) lightningFlashAlpha -= 0.05;
+    if (nukeFlashAlpha > 0) nukeFlashAlpha -= 0.02;
+
+    if (nukePlane) {
+        nukePlane.x += nukePlane.speed;
+        if (nukePlane.x >= nukePlane.targetX) {
+            fallingNuke = { x: nukePlane.x, y: nukePlane.y + 10, vy: 4 };
+            nukePlane = null;
+        }
+    }
+
+    if (fallingNuke) {
+        fallingNuke.y += fallingNuke.vy;
+        fallingNuke.vy += 0.6;
+
+        let impactLimitY = GROUND_Y - floodWaterLevel;
+        if (fallingNuke.y >= impactLimitY - 10) {
+            sfxNuke.play();
+            nukeFlashAlpha = 1.0;
+            screenShake = 35;
+            chromaticAberrationTimer = 25;
+
+            let explosionX = fallingNuke.x;
+            explosions.push({ x: explosionX, y: impactLimitY - 40, r: 10, maxR: 350 });
+
+            let camX = Math.max(0, Math.min(tank.x - canvas.width/2, WORLD_WIDTH - canvas.width));
+            let screenLeft = camX;
+            let screenRight = camX + canvas.width;
+
+            zombies.forEach((z, zi) => {
+                if (z.x >= screenLeft && z.x <= screenRight) {
+                    for(let i=0; i<12; i++) {
+                        bloodSplats.push({ 
+                            x: z.x + 11, y: z.y + 16, 
+                            vx: (Math.random() - 0.5) * 10, vy: -Math.random() * 12 - 4, 
+                            length: 12 + Math.random() * 10, life: 40, hitWall: false 
+                        });
+                    }
+                    zombies.splice(zi, 1);
+                    cash += 15;
+                    score += 30;
+                }
+            });
+
+            buildings.forEach(b => {
+                if (!b.destroyed && b.x + b.w >= screenLeft && b.x <= screenRight) {
+                    b.hp -= 2500;
+                    b.shake = 30;
+                    spawnUltraDebris(b.x + b.w/2, b.y + 50, 25, true);
+                    if (b.hp <= 0) {
+                        b.destroyed = true;
+                        cash += 500;
+                        score += 200;
+                        checkVictory();
+                    }
+                }
+            });
+
+            fallingNuke = null;
+        }
+    }
+
+    if (graphicsMode === 'ultra' || graphicsMode === 'overdrive') {
+        lightningTimer++;
+        if (lightningTimer > nextLightningInterval) {
+            lightningTimer = 0;
+            const possibleIntervals = [180, 360, 720, 1200];
+            nextLightningInterval = possibleIntervals[Math.floor(Math.random() * possibleIntervals.length)];
+
+            if (Math.random() < 0.33) {
+                lightningFlashAlpha = 0.75;
+                sfxThunder.play();
+
+                let boltCount = 1 + Math.floor(Math.random() * 2);
+                for (let b = 0; b < boltCount; b++) {
+                    let boltX = Math.random() * WORLD_WIDTH;
+                    let segments = [];
+                    let cx = boltX;
+                    let cy = 0;
+                    while (cy < GROUND_Y - 120) {
+                        let nextX = cx + (Math.random() - 0.5) * 100;
+                        let nextY = cy + 40 + Math.random() * 60;
+                        segments.push({x1: cx, y1: cy, x2: nextX, y2: nextY});
+                        cx = nextX;
+                        cy = nextY;
+                    }
+                    let isDestructiveStrike = Math.random() < 0.15;
+                    lightningBolts.push({ x: boltX, segments: segments, life: 12, destructive: isDestructiveStrike });
+
+                    if (isDestructiveStrike) {
+                        screenShake = 16;
+                        chromaticAberrationTimer = 8;
+                        buildings.forEach(build => {
+                            if (!build.destroyed && boltX >= build.x && boltX <= build.x + build.w) {
+                                build.hp -= 300;
+                                build.shake = 18;
+                                explosions.push({ x: boltX, y: build.y + 40, r: 8, maxR: 60 });
+                                spawnUltraDebris(boltX, build.y + 40, 10, true);
+                                if (build.hp <= 0) {
+                                    build.destroyed = true;
+                                    cash += 500;
+                                    score += 200;
+                                    checkVictory();
+                                }
+                            }
+                        });
+
+                        zombies.forEach((z, zi) => {
+                            if (Math.abs(z.x - boltX) < 45) {
+                                for(let i=0; i<6; i++) {
+                                    bloodSplats.push({ 
+                                        x: z.x + 11, y: z.y + 16, 
+                                        vx: (Math.random() - 0.5) * 7, vy: -Math.random() * 8 - 2, 
+                                        length: 10 + Math.random() * 8, life: 25, hitWall: false 
+                                    });
+                                }
+                                zombies.splice(zi, 1);
+                                cash += 10;
+                                score += 20;
+                            }
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    lightningBolts.forEach((lb, lbi) => {
+        lb.life--;
+        if (lb.life <= 0) lightningBolts.splice(lbi, 1);
+    });
+
+    if(graphicsMode === 'ultra' || graphicsMode === 'overdrive') {
+        if(targetCameraZoom < 1.0) targetCameraZoom += 0.005;
+        currentCameraZoom += (targetCameraZoom - currentCameraZoom) * 0.1;
+        timeCycle += 0.001; 
+    } else {
+        currentCameraZoom = 1.0;
+    }
+
+    if(graphicsMode === 'overdrive') {
+        screenLensDrops.forEach(d => {
+            d.y += d.vy * 1.5;
+            if(d.y > canvas.height) { d.y = -20; d.x = Math.random()*canvas.width; }
+        });
+        volumetricFogBanks.forEach(f => {
+            f.x += f.vx * 1.4; 
+            f.driftY += 0.015;
+            if(f.x - f.r > WORLD_WIDTH) f.x = -f.r;
+        });
+        heatDistortions.forEach((hd, hdi) => {
+            hd.r += hd.speed;
+            hd.strength *= 0.92;
+            if(hd.strength < 0.1) heatDistortions.splice(hdi, 1);
+        });
+    }
+
+    torrentialRain.forEach(p => {
+        p.y += p.speed;
+        p.x += Math.cos(p.angle) * 4;
+
+        let surfaceHitY = GROUND_Y - floodWaterLevel;
+
+        if (p.x >= tank.x && p.x <= tank.x + tank.w && p.y >= tank.y && p.y <= tank.y + 10) {
+            triggerSharpSplash(p.x, p.y);
+            p.y = Math.random() * -200;
+            p.x = Math.random() * WORLD_WIDTH;
+        } 
+        else if (Math.random() < 0.15 && zombies.some(z => p.x >= z.x && p.x <= z.x + 22 && p.y >= z.y && p.y <= GROUND_Y)) {
+            triggerSharpSplash(p.x, p.y);
+            p.y = Math.random() * -200;
+            p.x = Math.random() * WORLD_WIDTH;
+        }
+        else if (p.y >= surfaceHitY) {
+            triggerSharpSplash(p.x, surfaceHitY);
+            p.y = Math.random() * -200;
+            p.x = Math.random() * WORLD_WIDTH;
+        }
+    });
+
+    rainImpactSplashes.forEach((sp, spi) => {
+        sp.x += sp.vx;
+        sp.y += sp.vy;
+        sp.vy += 0.3;
+        sp.life--;
+        if (sp.life <= 0) rainImpactSplashes.splice(spi, 1);
+    });
+
+    if (floodWaterLevel < 14) floodWaterLevel += 0.001;
+
+    if(movingLeft && tank.x > 0) tank.x -= tank.speed;
+    if(movingRight && tank.x < WORLD_WIDTH - tank.w) tank.x += tank.speed;
+    updateHeli(helis.green, -50); updateHeli(helis.blue, -150);
+
+    if(graphicsMode === 'ultra' || graphicsMode === 'overdrive') {
+        projectiles.forEach(p => {
+            if(p.type === 'rocket' || p.type === 'heavy-rocket') activeLights.push({ x: p.x, y: p.y, r: 60, color: 'rgba(255,80,0,0.4)', decay: 1.0 });
+        });
+        activeLights.forEach((l, li) => {
+            l.r -= l.decay * 3;
+            if(l.r <= 0 || l.decay === 1.0) activeLights.splice(li, 1);
+        });
+    }
+
+    physicalDebris.forEach((d, di) => {
+        d.vy += 0.25; d.x += d.vx; d.y += d.vy; d.rot += d.rotV;
+        let limitY = GROUND_Y - floodWaterLevel;
+        if(d.y >= limitY - d.r) { d.y = limitY - d.r; d.vy = -d.vy * d.bounce; d.vx *= 0.6; }
+        d.life -= 0.015;
+        if(d.life <= 0) physicalDebris.splice(di, 1);
+    });
+
+    projectiles.forEach((p, pi) => {
+        p.x += p.vx; p.y += (p.vy || 0);
+        if(p.x < 0 || p.x > WORLD_WIDTH) projectiles.splice(pi, 1);
+        buildings.forEach(b => {
+            if (!b.destroyed && p.x > b.x && p.x < b.x + b.w && p.y > b.y && p.y < b.y + b.h) {
+                b.hp -= p.dmg; b.shake = 12;
+                if(graphicsMode === 'ultra' || graphicsMode === 'overdrive') b.impactCraters.push({ cx: p.x - b.x, cy: p.y - b.y, cr: p.type==='bullet'? 8 : 22 });
+                
+                if(graphicsMode === 'overdrive') {
+                    let localX = p.x - b.x; let localY = p.y - b.y;
+                    b.rooms.forEach(rm => {
+                        if(localX > rm.rx - 20 && localX < rm.rx + rm.rw + 20 && localY > rm.ry - 20 && localY < rm.ry + rm.rh + 20) rm.blownOpen = true;
+                    });
+                }
+
+                if (p.type !== 'bullet') {
+                    let maxRad = p.type === 'heavy-rocket' ? 120 : 50;
+                    explosions.push({ x: p.x, y: p.y, r: 5, maxR: maxRad });
+                    if(graphicsMode === 'high') screenShake = p.type === 'heavy-rocket' ? 12 : 5;
+                    if(graphicsMode === 'ultra' || graphicsMode === 'overdrive') { 
+                        screenShake = p.type === 'heavy-rocket' ? 20 : 10; chromaticAberrationTimer = 8; spawnUltraDebris(p.x, p.y, p.type==='heavy-rocket'?15:8, true); 
+                        activeLights.push({ x: p.x, y: p.y, r: maxRad*2, color: 'rgba(255,100,30,0.8)', decay: 6 }); 
+                        if(graphicsMode === 'overdrive') heatDistortions.push({ x: p.x, y: p.y, r: 4, maxR: maxRad*1.5, strength: p.type==='heavy-rocket'?14:8, speed: 5 });
+                    }
+                }
+                if (p.type === 'heavy-rocket' || p.type === 'cannon' || p.type === 'ringlaser') {
+                    zombies.forEach((z, zi) => {
+                        if(Math.abs(z.x - p.x) < 160) {
+                            let heading = z.x > p.x ? 6 : -6;
+                            for(let i=0; i<12; i++) {
+                                bloodSplats.push({ 
+                                    x: z.x + 11, y: z.y + 16, 
+                                    vx: heading + (Math.random() - 0.5) * 8, vy: -Math.random() * 12 - 4, 
+                                    length: 14 + Math.random() * 12, life: 35 + Math.floor(Math.random() * 15),
+                                    hitWall: false 
+                                });
+                            }
+                            zombies.splice(zi, 1); cash += 5; score += 10;
+                        }
+                    });
+                }
+                for(let i=0; i < 2; i++) zombies.push({ x: b.x + (Math.random()*b.w), y: GROUND_Y - 32, speed: (1.5 + Math.random()) * (Math.random() > 0.5 ? 1 : -1) });
+                projectiles.splice(pi, 1);
+                if (b.hp <= 0) { b.destroyed = true; cash += 500; score += 200; checkVictory(); }
+            }
+        });
+    });
+
+    buildings.forEach(b => {
+        if(b.destroyed) {
+            if(b.h > 15) {
+                b.h -= 2; b.y += 2;
+                if(Math.random() > 0.9) explosions.push({ x: b.x + Math.random()*b.w, y: b.y + Math.random()*b.h, r: 5, maxR: 40 });
+                if((graphicsMode === 'ultra' || graphicsMode === 'overdrive') && Math.random() > 0.8) spawnUltraDebris(b.x + Math.random()*b.w, b.y, 2, Math.random() > 0.5);
+            }
+            if(Math.random() > 0.7) {
+                buildingParticles.push({
+                    x: b.x + Math.random() * b.w, y: GROUND_Y - 10, vx: (Math.random() - 0.5) * 1, vy: -1 - Math.random() * 2,
+                    size: 5 + Math.random() * 10, life: 1.0, type: Math.random() > 0.3 ? 'smoke' : 'fire'
+                });
+            }
+        }
+    });
+
+    buildingParticles.forEach((p, pi) => {
+        p.x += p.vx; p.y += p.vy; p.life -= 0.01;
+        if(p.life <= 0) buildingParticles.splice(pi, 1);
+    });
+
+    zombies.forEach((z, zi) => {
+        z.x -= z.speed;
+        if(z.x <= 0 || z.x >= WORLD_WIDTH - 22) z.speed *= -1;
+        if (z.x < tank.x + tank.w && z.x > tank.x) {
+            for(let i=0; i<10; i++) {
+                bloodSplats.push({ 
+                    x: z.x + 11, y: GROUND_Y - floodWaterLevel - 5, 
+                    vx: (Math.random() - 0.5) * 6, vy: -Math.random() * 8 - 3, 
+                    length: 10 + Math.random() * 10, life: 25, hitWall: false 
+                });
+            }
+            zombies.splice(zi, 1); cash += 5; score += 10;
+        }
+    });
+
+    bloodSplats.forEach((s, si) => {
+        if(!s.hitWall) {
+            s.x += s.vx;
+            s.y += s.vy;
+            s.vy += 0.4;
+
+            if(graphicsMode === 'overdrive') {
+                buildings.forEach(b => {
+                    if(!b.destroyed && s.x > b.x && s.x < b.x + b.w && s.y > b.y && s.y < GROUND_Y) {
+                        s.hitWall = true; s.vx = 0; s.vy = 0;
+                    }
+                });
+            }
+            
+            let waterSurfaceY = GROUND_Y - floodWaterLevel;
+            if (s.y >= waterSurfaceY) {
+                s.y = waterSurfaceY + 2; 
+                s.vx *= 0.3; 
+                s.vy = 0;
+                s.life--;
+            }
+        } else {
+            s.life--;
+        }
+        if (s.life <= 0) bloodSplats.splice(si, 1);
+    });
+
+    explosions.forEach((ex, ei) => { ex.r += 5; if (ex.r > ex.maxR) explosions.splice(ei, 1); });
+}
+
+function updateHeli(h, xOffset) {
+    if (!h.active) return;
+    const targetX = tank.x + xOffset;
+    if (h.x < targetX) h.x += h.speed;
+    if (h.x > targetX) h.x -= h.speed;
+    h.bladeAngle += 0.5; h.fireTimer++;
+    if (h.fireTimer >= h.fireRate) {
+        let target = buildings.find(b => !b.destroyed && Math.abs(b.x - h.x) < 1500);
+        if(target) {
+            h.facingRight = target.x > h.x;
+            const angle = Math.atan2((target.y + target.h/2) - (h.y + 20), (target.x + target.w/2) - (h.x + 40));
+            projectiles.push({ x: h.x + 40, y: h.y + 20, vx: Math.cos(angle) * 18, vy: Math.sin(angle) * 18, type: h.weaponType, dmg: h.weaponType === 'rocket' ? 10 : 5 });
+            
+            h.fireTimer = 0;
+        }
+    }
+}
+
+function draw() {
+    if(graphicsMode === 'ultra' || graphicsMode === 'overdrive') {
+        let skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        let cycleIntensity = Math.sin(timeCycle);
+        skyGradient.addColorStop(0, `rgb(${6 + cycleIntensity*4}, ${10 + cycleIntensity*5}, ${16 + cycleIntensity*6})`);
+        skyGradient.addColorStop(1, '#050910');
+        ctx.fillStyle = skyGradient; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    } else {
+        ctx.fillStyle = '#050910';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+    
+    let camX = gameStarted ? Math.max(0, Math.min(tank.x - canvas.width/2, WORLD_WIDTH - canvas.width)) : 0;
+    ctx.save(); 
+    
+    if(graphicsMode === 'ultra' || graphicsMode === 'overdrive') {
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.scale(currentCameraZoom, currentCameraZoom);
+        ctx.translate(-canvas.width / 2, -canvas.height / 2);
+    }
+
+    if(gameStarted && (graphicsMode === 'high' || graphicsMode === 'ultra' || graphicsMode === 'overdrive') && screenShake > 0) {
+        let dx = (Math.random() - 0.5) * screenShake; let dy = (Math.random() - 0.5) * screenShake;
+        ctx.translate(-camX + dx, dy);
+    } else {
+        ctx.translate(-camX, 0);
+    }
+
+    if (graphicsMode === 'high' || graphicsMode === 'ultra' || graphicsMode === 'overdrive') {
+        backgroundMountains.forEach(m => {
+            let paraX = m.x + (camX * 0.75); ctx.fillStyle = m.color;
+            ctx.beginPath(); ctx.moveTo(paraX, GROUND_Y); ctx.lineTo(paraX + m.w / 2, GROUND_Y - m.h); ctx.lineTo(paraX + m.w, GROUND_Y); ctx.fill();
+        });
+    }
+
+    if (graphicsMode === 'ultra' || graphicsMode === 'overdrive') {
+        lightningBolts.forEach(lb => {
+            ctx.save();
+            ctx.shadowBlur = lb.destructive ? 40 : 25;
+            ctx.shadowColor = lb.destructive ? '#ff00ff' : '#00ffff';
+            ctx.strokeStyle = lb.destructive ? 'rgba(255, 240, 255, 0.99)' : 'rgba(220, 240, 255, 0.85)';
+            ctx.lineWidth = lb.destructive ? 4 : 2.5;
+            ctx.beginPath();
+            lb.segments.forEach(seg => {
+                ctx.moveTo(seg.x1, seg.y1);
+                ctx.lineTo(seg.x2, seg.y2);
+            });
+            ctx.stroke();
+            ctx.restore();
+        });
+    }
+    
+    ctx.fillStyle = '#222'; ctx.fillRect(0, GROUND_Y - 10, WORLD_WIDTH, 10); 
+    ctx.fillStyle = '#0f141c'; ctx.fillRect(0, GROUND_Y, WORLD_WIDTH, 40);
+    
+    ctx.strokeStyle = '#a38200'; ctx.lineWidth = 3; ctx.setLineDash([30, 30]); ctx.beginPath(); ctx.moveTo(0, GROUND_Y + 20); ctx.lineTo(WORLD_WIDTH, GROUND_Y + 20); ctx.stroke(); ctx.setLineDash([]); 
+    ctx.fillStyle = '#333'; ctx.fillRect(0, GROUND_Y, WORLD_WIDTH, 2); ctx.fillRect(0, GROUND_Y + 38, WORLD_WIDTH, 2); 
+
+    bloodSplats.forEach(s => { 
+        ctx.save();
+        ctx.strokeStyle = `rgba(160, 4, 12, ${s.life / 40})`;
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        if(s.hitWall) {
+            ctx.moveTo(s.x, s.y);
+            ctx.lineTo(s.x, s.y + s.length * 1.2);
+        } else {
+            ctx.moveTo(s.x, s.y);
+            ctx.lineTo(s.x - s.vx * 1.5, s.y - s.vy * 1.5);
+        }
+        ctx.stroke();
+        ctx.restore();
+    });
+    
+    buildings.forEach(b => {
+        ctx.save();
+        if (gameStarted && !b.destroyed && b.shake > 0) { ctx.translate((Math.random()-0.5)*b.shake, 0); b.shake *= 0.8; }
+        
+        ctx.fillStyle = b.destroyed ? '#060a10' : b.color;
+        ctx.fillRect(b.x, b.y, b.w, b.h);
+        
+        if(graphicsMode === 'overdrive' && !b.destroyed) {
+            b.rooms.forEach(rm => {
+                if(rm.blownOpen) {
+                    ctx.fillStyle = '#14100c'; ctx.fillRect(b.x + rm.rx, b.y + rm.ry, rm.rw, rm.rh); 
+                    ctx.fillStyle = rm.itemColor;
+                    if(rm.furnitureType === 'furniture') ctx.fillRect(b.x + rm.rx + 4, b.y + rm.ry + rm.rh - 8, 12, 8); 
+                    else { ctx.fillStyle = '#26170d'; ctx.fillRect(b.x + rm.rx + rm.rw/2 - 3, b.y + rm.ry, 6, rm.rh); } 
+                }
+            });
+        }
+
+        if(graphicsMode === 'ultra' || graphicsMode === 'overdrive') {
+            ctx.save(); ctx.globalCompositeOperation = 'destination-out';
+            b.impactCraters.forEach(c => { ctx.beginPath(); ctx.arc(b.x + c.cx, b.y + c.cy, c.cr, 0, Math.PI*2); ctx.fill(); });
+            ctx.restore();
+            b.impactCraters.forEach(c => { ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.beginPath(); ctx.arc(b.x + c.cx, b.y + c.cy, c.cr, 0, Math.PI*2); ctx.fill(); });
+        }
+
+        if(!b.destroyed) {
+            ctx.strokeStyle = '#000'; ctx.strokeRect(b.x, b.y, b.w, b.h);
+            if(graphicsMode === 'high' || graphicsMode === 'ultra' || graphicsMode === 'overdrive') { ctx.shadowBlur = b.hp < 400 ? 0 : 15; ctx.shadowColor = '#6090c0'; }
+            
+            ctx.fillStyle = b.hp < 400 ? '#0b0f14' : '#cce0f5'; 
+            b.rooms.forEach(rm => {
+                if(!rm.blownOpen) ctx.fillRect(b.x + rm.rx, b.y + rm.ry, rm.rw, rm.rh);
+            });
+            
+            ctx.shadowBlur = 0; ctx.fillStyle = '#222'; ctx.fillRect(b.x, b.y-25, b.w, 12);
+            ctx.fillStyle = b.hp > 500 ? '#00aacc' : '#cc2222'; ctx.fillRect(b.x, b.y-25, b.w*(b.hp/b.maxHp), 12);
+            ctx.fillStyle = '#ffffff'; ctx.fillRect(b.x - 2, b.y - 4, b.w + 4, 4);
+        }
+        ctx.restore();
+    });
+
+    if (nukePlane) {
+        ctx.save();
+        ctx.fillStyle = '#445566';
+        ctx.fillRect(nukePlane.x, nukePlane.y, 60, 16);
+        ctx.fillStyle = '#223344';
+        ctx.fillRect(nukePlane.x + 20, nukePlane.y - 8, 20, 8);
+        ctx.fillStyle = '#334455';
+        ctx.fillRect(nukePlane.x + 10, nukePlane.y - 14, 40, 4);
+        ctx.restore();
+    }
+
+    if (fallingNuke) {
+        ctx.save();
+        ctx.fillStyle = '#ffcc00';
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = '#ff5500';
+        ctx.beginPath();
+        ctx.ellipse(fallingNuke.x, fallingNuke.y, 8, 16, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+
+    if(graphicsMode === 'ultra' || graphicsMode === 'overdrive') {
+        physicalDebris.forEach(d => {
+            ctx.save(); ctx.translate(d.x, d.y); ctx.rotate(d.rot);
+            if(d.type === 'ember') {
+                ctx.fillStyle = `rgba(235, ${80 + Math.floor(Math.random()*100)}, 0, ${d.life})`;
+                ctx.shadowBlur = 8; ctx.shadowColor = '#ff4400'; ctx.fillRect(-d.r, -d.r, d.r*2, d.r*2);
+            } else {
+                ctx.fillStyle = `rgba(45,50,55, ${d.life})`; ctx.beginPath();
+                ctx.moveTo(-d.r, d.r); ctx.lineTo(0, -d.r); ctx.lineTo(d.r, d.r); ctx.closePath(); ctx.fill();
+            }
+            ctx.restore();
+        });
+    }
+
+    buildingParticles.forEach(p => {
+        ctx.save(); ctx.globalAlpha = p.life;
+        if ((graphicsMode === 'high' || graphicsMode === 'ultra' || graphicsMode === 'overdrive') && p.type === 'fire') { ctx.shadowBlur = 10; ctx.shadowColor = '#ff4400'; }
+        ctx.fillStyle = p.type === 'smoke' ? '#4d5866' : '#ee5500';
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.size * (2 - p.life), 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+    });
+    ctx.globalAlpha = 1.0;
+
+    if(graphicsMode === 'overdrive') {
+        volumetricFogBanks.forEach(f => {
+            ctx.save();
+            let waveY = f.y + Math.sin(f.driftY) * 12;
+            let fogGrad = ctx.createRadialGradient(f.x, waveY, f.r*0.1, f.x, waveY, f.r);
+            fogGrad.addColorStop(0, 'rgba(80, 95, 115, 0.18)');
+            fogGrad.addColorStop(1, 'rgba(80, 95, 115, 0)');
+            ctx.fillStyle = fogGrad; ctx.beginPath(); ctx.arc(f.x, waveY, f.r, 0, Math.PI*2); ctx.fill();
+            ctx.restore();
+        });
+    }
+
+    drawHeli(helis.green); drawHeli(helis.blue);
+
+    if (gameStarted) {
+        ctx.save(); ctx.translate(tank.x + tank.w/2, tank.y + tank.h/2); if (!facingRight) ctx.scale(-1, 1);
+        if (graphicsMode === 'high' || graphicsMode === 'ultra' || graphicsMode === 'overdrive') {
+            let grad = ctx.createLinearGradient(-tank.w/2, 0, tank.w/2, 0);
+            grad.addColorStop(0, '#1c2d18'); grad.addColorStop(0.5, '#324b2a'); grad.addColorStop(1, '#132110');
+            ctx.fillStyle = grad;
+        } else { ctx.fillStyle = '#22351d'; }
+        
+        ctx.fillRect(-tank.w/2 + 5, -15, tank.w - 10, 25); ctx.fillStyle = '#000'; ctx.fillRect(-tank.w/2, 10, tank.w, 15); 
+        ctx.fillStyle = '#222'; for(let i=-35; i<=35; i+=18) { ctx.beginPath(); ctx.arc(i, 18, 7, 0, Math.PI*2); ctx.fill(); }
+        ctx.fillStyle = '#293d24'; ctx.fillRect(-20, -30, 40, 20); ctx.fillRect(15 - tank.recoil, -25, 45, 10); 
+        
+        if(tank.muzzleFlash > 0) {
+            if(graphicsMode === 'high' || graphicsMode === 'ultra' || graphicsMode === 'overdrive') { ctx.shadowBlur = 30; ctx.shadowColor = '#e6a100'; }
+            ctx.fillStyle = '#ffd000'; ctx.beginPath(); ctx.arc(60, -20, 15, 0, Math.PI*2); ctx.fill();
+            tank.muzzleFlash--;
+        }
+        ctx.restore();
+        if(tank.recoil > 0) tank.recoil -= 1;
+    }
+
+    projectiles.forEach(p => {
+        ctx.save();
+        if (p.type === 'rocket' || p.type === 'heavy-rocket') {
+            let size = p.type === 'heavy-rocket' ? 2 : 1;
+            if(graphicsMode === 'high' || graphicsMode === 'ultra' || graphicsMode === 'overdrive') { ctx.shadowBlur = 15; ctx.shadowColor = 'red'; }
+            ctx.fillStyle = 'red'; ctx.fillRect(p.x, p.y-3*size, 16*size, 8*size);
+            ctx.fillStyle = 'orange'; ctx.fillRect(p.x-6*size, p.y-2*size, 6*size, 4*size);
+        } else if (p.type === 'cannon') {
+            ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(p.x, p.y, 9, 0, Math.PI*2); ctx.fill();
+        } else if (p.type === 'ringlaser') {
+            if(graphicsMode === 'high' || graphicsMode === 'ultra' || graphicsMode === 'overdrive') { ctx.shadowBlur = 20; ctx.shadowColor = '#00ffff'; }
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.ellipse(p.x, p.y, 8, 16, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fillStyle = 'rgba(0, 255, 255, 0.4)';
+            ctx.fill();
+        } else {
+            if(graphicsMode === 'high' || graphicsMode === 'ultra' || graphicsMode === 'overdrive') { ctx.shadowBlur = 10; ctx.shadowColor = '#ffd700'; }
+            ctx.fillStyle = '#ffd700'; ctx.fillRect(p.x, p.y, 12, 6);
+        }
+        ctx.restore();
+    });
+
+    explosions.forEach(ex => {
+        ctx.save();
+        if (graphicsMode === 'high' || graphicsMode === 'ultra' || graphicsMode === 'overdrive') {
+            let fireGrad = ctx.createRadialGradient(ex.x, ex.y, ex.r*0.1, ex.x, ex.y, ex.r);
+            fireGrad.addColorStop(0, '#ffffff'); fireGrad.addColorStop(0.2, '#ffff00'); fireGrad.addColorStop(0.5, '#ff6600'); fireGrad.addColorStop(0.8, 'rgba(100,50,0,0.6)'); fireGrad.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = fireGrad; ctx.shadowBlur = 40; ctx.shadowColor = '#ffcc00';
+        } else { ctx.fillStyle = `rgba(255, ${Math.floor(200 * (1 - ex.r/ex.maxR))}, 0, ${1 - ex.r/ex.maxR})`; }
+        ctx.beginPath(); ctx.arc(ex.x, ex.y, ex.r, 0, Math.PI*2); ctx.fill();
+        ctx.restore();
+    });
+
+    zombies.forEach(z => {
+        ctx.fillStyle = '#2f4c3e'; ctx.fillRect(z.x, z.y, 22, 32);
+        ctx.fillStyle = '#142030'; ctx.fillRect(z.x, z.y+20, 22, 12);
+        ctx.fillStyle = '#ff1111'; ctx.fillRect(z.x + (z.speed > 0 ? 0 : 16), z.y+5, 4, 4);
+    });
+
+    if(graphicsMode === 'ultra' || graphicsMode === 'overdrive') {
+        activeLights.forEach(l => {
+            ctx.save(); let rayG = ctx.createRadialGradient(l.x, l.y, 10, l.x, l.y, l.r);
+            rayG.addColorStop(0, l.color); rayG.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.globalCompositeOperation = 'screen'; ctx.fillStyle = rayG;
+            ctx.beginPath(); ctx.arc(l.x, l.y, l.r, 0, Math.PI*2); ctx.fill(); ctx.restore();
+        });
+    }
+
+    ctx.strokeStyle = 'rgba(165, 210, 255, 0.75)';
+    ctx.lineWidth = 1.5;
+    rainImpactSplashes.forEach(sp => {
+        ctx.beginPath();
+        ctx.moveTo(sp.x, sp.y);
+        ctx.lineTo(sp.x + sp.vx * 1.5, sp.y + sp.vy * 1.5);
+        ctx.stroke();
+    });
+
+    ctx.strokeStyle = 'rgba(156, 203, 245, 0.4)';
+    torrentialRain.forEach(p => {
+        ctx.lineWidth = p.thickness;
+        let dx = Math.cos(p.angle) * p.length;
+        let dy = Math.sin(p.angle) * p.length;
+
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(p.x + dx, p.y + dy);
+        ctx.stroke();
+    });
+
+    ctx.fillStyle = 'rgba(28, 49, 74, 0.55)';
+    ctx.fillRect(0, GROUND_Y - floodWaterLevel, WORLD_WIDTH, floodWaterLevel + 40);
+
+    ctx.restore();
+
+    if (nukeFlashAlpha > 0) {
+        ctx.save();
+        ctx.fillStyle = `rgba(255, 240, 150, ${nukeFlashAlpha})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.restore();
+    }
+
+    if (lightningFlashAlpha > 0) {
+        ctx.save();
+        ctx.fillStyle = `rgba(220, 240, 255, ${lightningFlashAlpha})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.restore();
+    }
+
+    if(graphicsMode === 'overdrive' && heatDistortions.length > 0) {
+        heatDistortions.forEach(hd => {
+            ctx.save(); ctx.globalCompositeOperation = 'difference';
+            ctx.fillStyle = `rgba(255,255,255,${hd.strength * 0.002})`;
+            ctx.beginPath(); ctx.arc(hd.x - camX, hd.y, hd.r, 0, Math.PI*2); ctx.fill();
+            ctx.restore();
+        });
+    }
+
+    if((graphicsMode === 'ultra' || graphicsMode === 'overdrive') && chromaticAberrationTimer > 0) {
+        ctx.save(); ctx.globalCompositeOperation = 'screen';
+        ctx.fillStyle = 'rgba(255, 0, 0, 0.15)'; ctx.fillRect(Math.random()*4, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'rgba(0, 0, 255, 0.15)'; ctx.fillRect(-Math.random()*4, 0, canvas.width, canvas.height);
+        ctx.restore();
+    }
+
+    if(graphicsMode === 'ultra' || graphicsMode === 'overdrive') {
+        let vig = ctx.createRadialGradient(canvas.width/2, canvas.height/2, canvas.width*0.3, canvas.width/2, canvas.height/2, canvas.width*0.7);
+        vig.addColorStop(0, 'rgba(0,0,0,0)'); vig.addColorStop(1, 'rgba(0,0,0,0.65)');
+        ctx.fillStyle = vig; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    if(graphicsMode === 'overdrive') {
+        ctx.save(); ctx.strokeStyle = 'rgba(215, 235, 255, 0.2)'; ctx.lineWidth = 1.5;
+        screenLensDrops.forEach(d => {
+            ctx.beginPath(); ctx.moveTo(d.x, d.y); ctx.lineTo(d.x, d.y + d.len); ctx.stroke();
+        });
+        ctx.restore();
+    }
+
+    update(); requestAnimationFrame(draw);
+}
+draw();
+
+function drawHeli(h) {
+    if (!h.active) return;
+    ctx.save(); ctx.translate(h.x, h.y); if(!h.facingRight) ctx.scale(-1, 1);
+    ctx.fillStyle = h.tailColor; ctx.fillRect(-20, 10, 40, 8);
+    ctx.fillStyle = h.color; ctx.beginPath(); ctx.ellipse(30, 15, 40, 15, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(150, 190, 235, 0.6)'; ctx.beginPath(); ctx.ellipse(55, 12, 15, 8, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#111'; const bladeW = Math.cos(h.bladeAngle) * 80; ctx.fillRect(30 - bladeW/2, -5, bladeW, 4);
+    ctx.restore();
+}
+
+window.addEventListener('keydown', e => {
+    if (paused || !gameStarted) return;
+    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+        movingLeft = true;
+        facingRight = false;
+    }
+    if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+        movingRight = true;
+        facingRight = true;
+    }
+    if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+        shoot();
+    }
+});
+
+window.addEventListener('keyup', e => {
+    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+        movingLeft = false;
+    }
+    if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+        movingRight = false;
+    }
+});
+</script>
+</body>
+</html>
